@@ -1,3 +1,7 @@
+# Distributed feature engineering pipeline for Milestone 4
+# Supports both local and Ray-based distributed execution
+# Reads parquet input, computes amount_squared, and aggregates by transaction_type
+
 import argparse
 import logging
 import time
@@ -51,6 +55,18 @@ def process_distributed(df: pd.DataFrame, n_chunks: int) -> pd.Series:
 
 
 def run_pipeline(input_path: str, mode: str, n_chunks: int, output_path: str | None) -> None:
+    """
+    Executes feature engineering pipeline.
+
+    Parameters:
+    - input_path: path to parquet file
+    - mode: 'local' or 'distributed'
+    - chunks: number of partitions
+
+    Returns:
+    - Mean of amount_squared grouped by transaction_type
+    """
+
     input_obj = Path(input_path)
 
     if input_obj.is_dir():
