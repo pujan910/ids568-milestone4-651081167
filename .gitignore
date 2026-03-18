@@ -1,1 +1,6 @@
 .venv/
+data.parquet
+sample_data.parquet
+local_output.txt
+distributed_output.txt
+pipeline_output.txt
