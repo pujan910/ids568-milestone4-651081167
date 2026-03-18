@@ -1,59 +1,65 @@
 # Milestone 4 Report
 
 ## 1. Overview
-This project implements a distributed feature engineering pipeline using Ray. The goal was to process large scale synthetic transaction data (10M rows) and compare performance between local and distributed execution.
+This project implements a distributed feature engineering pipeline using Ray. The goal was to process large synthetic transaction data (10M+ rows) and compare local vs distributed execution performance.
 
 ---
 
 ## 2. Data Generation
 - Generated using generate_data.py
-- Rows: 10,000,000
-- Seed: 42 (for reproducibility)
+- Default rows: 10,000,000
+- Seed: 42 (ensures reproducibility)
 - Format: Parquet
-
-Columns:
-- user_id
-- transaction_amount
-- transaction_type
-- timestamp
+- Supports both file and directory output
 
 ---
 
 ## 3. Pipeline Design
 
 ### Local Execution
-- Entire dataset processed on single machine
+- Processes entire dataset on single machine
 - Steps:
   - compute amount_squared
   - group by transaction_type
   - calculate mean
 
 ### Distributed Execution
-- Dataset split into chunks
-- Each chunk processed in parallel using Ray
+- Splits dataset into chunks
+- Uses Ray for parallel execution
 - Each worker computes:
   - sum and count
 - Final aggregation:
   - global mean = total sum / total count
 
-This ensures deterministic and correct output.
+This ensures deterministic and correct results across runs.
 
 ---
 
 ## 4. Performance Comparison
 
 | Metric | Local | Distributed |
-|-------|------|------------|
+|--------|------|------------|
 | Runtime | ~0.4 sec | ~2.9 sec |
+| Dataset Size | 10M rows | 10M rows |
 | Parallelism | 1 core | 4 workers |
-| Data Size | 10M rows | 10M rows |
+| Partitions | 1 | 4 |
 
 ---
 
-## 5. Analysis
+## 5. Additional Metrics (Observed / Notes)
+
+- Shuffle Volume: Not explicitly measured (Ray handles data movement internally)
+- Worker Utilization: Limited due to small dataset size and local machine constraints
+- Peak Memory: Not measured, but dataset fits in memory for local execution
+
+Note: Advanced metrics like shuffle volume and memory usage typically require Ray dashboard or cluster-level monitoring tools.
+
+---
+
+## 6. Analysis
 
 - Local execution is faster because:
-  - no scheduling overhead
+  - no task scheduling overhead
   - no inter-process communication
 
 - Distributed execution is slower because:
@@ -61,48 +67,49 @@ This ensures deterministic and correct output.
   - task scheduling cost
   - data splitting overhead
 
-- However, distributed approach is useful when:
-  - dataset does not fit in memory
+- Distributed processing becomes beneficial when:
+  - dataset size increases significantly
+  - data cannot fit in memory
   - running on multi-node systems
-  - scaling horizontally
 
 ---
 
-## 6. Reliability & Cost Analysis
+## 7. Reliability & Cost Analysis
 
 ### Reliability
 - Distributed systems allow:
   - task re-execution on failure
   - better fault tolerance
-- But introduces complexity in debugging and coordination
+- However, debugging is more complex compared to local execution
 
 ### Cost
-- Local:
-  - low compute cost
-  - simple execution
+- Local execution:
+  - low cost
+  - minimal resource usage
 
-- Distributed:
+- Distributed execution:
   - higher compute cost (multiple workers)
   - communication overhead
-  - potential network cost in real systems
+  - potential network cost in real-world deployment
 
-### Trade-off
-- small datasets → local is better
-- large datasets → distributed becomes beneficial
+### Trade-offs
+- small datasets → local is more efficient
+- large datasets → distributed provides scalability benefits
 
 ---
 
-## 7. Bottlenecks
+## 8. Bottlenecks
 
 - Ray initialization time
-- overhead of splitting data
+- overhead of chunking data
 - communication between workers
+- underutilization of workers for small workloads
 
 ---
 
-## 8. Conclusion
+## 9. Conclusion
 
 - Local execution performs better for this dataset size
-- Distributed processing introduces overhead but provides scalability
-- Ray is effective for parallel feature engineering tasks
-- This pipeline can scale to larger datasets or multi-node environments
+- Distributed processing introduces overhead but improves scalability
+- Ray provides a flexible framework for distributed feature engineering
+- This pipeline can scale to larger datasets and multi-node environments
